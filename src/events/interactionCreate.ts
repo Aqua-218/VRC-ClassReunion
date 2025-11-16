@@ -1,6 +1,8 @@
 import { Interaction } from 'discord.js';
 import { BotEvent } from '../types/discord';
 import { logger } from '../utils/logger';
+import { createInvitationModal } from '../utils/modals';
+import { handleInvitationCreate } from '../handlers/invitationHandler';
 
 /**
  * Interaction create event handler
@@ -120,11 +122,11 @@ async function handleButtonInteraction(interaction: Interaction) {
       ephemeral: true,
     });
   } else if (customId === 'invitation_create') {
-    // Handle create invitation button
-    // TODO: Implement invitation creation modal display
-    await interaction.reply({
-      content: '募集作成機能は開発中です',
-      ephemeral: true,
+    // Handle create invitation button - show modal
+    const modal = createInvitationModal();
+    await interaction.showModal(modal);
+    logger.debug('Displayed invitation creation modal', {
+      userId: interaction.user.id,
     });
   } else if (customId === 'ticket_create') {
     // Handle create ticket button
@@ -159,11 +161,7 @@ async function handleModalSubmit(interaction: Interaction) {
   // Route to specific modal handler
   if (customId === 'invitation_create_modal') {
     // Handle invitation creation modal
-    // TODO: Implement invitation creation logic
-    await interaction.reply({
-      content: '募集作成処理は開発中です',
-      ephemeral: true,
-    });
+    await handleInvitationCreate(interaction);
   } else if (customId === 'invitation_edit_modal') {
     // Handle invitation edit modal
     // TODO: Implement invitation edit logic
