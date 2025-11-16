@@ -14,6 +14,11 @@ import {
   handleCancelEventButton,
   handleConfirmCancel,
 } from '../handlers/editHandler';
+import {
+  handleStaffAssign,
+  handleAddInstanceLink,
+  handleInstanceLinkSubmit,
+} from '../handlers/staffAssignmentHandler';
 
 /**
  * Interaction create event handler
@@ -112,11 +117,12 @@ async function handleButtonInteraction(interaction: Interaction) {
     await handleCancelEventButton(interaction, invitationId);
   } else if (customId.startsWith('staff_assign_')) {
     // Handle staff assignment button
-    // TODO: Implement staff assignment handler
-    await interaction.reply({
-      content: 'スタッフ割り当て機能は開発中です',
-      ephemeral: true,
-    });
+    const invitationId = customId.replace('staff_assign_', '');
+    await handleStaffAssign(interaction, invitationId);
+  } else if (customId.startsWith('staff_add_link_')) {
+    // Handle add instance link button
+    const invitationId = customId.replace('staff_add_link_', '');
+    await handleAddInstanceLink(interaction, invitationId);
   } else if (customId === 'invitation_create') {
     // Handle create invitation button - show modal
     const modal = createInvitationModal();
@@ -173,11 +179,8 @@ async function handleModalSubmit(interaction: Interaction) {
     await handleEditModalSubmit(interaction);
   } else if (customId.startsWith('instance_link_modal_')) {
     // Handle instance link modal
-    // TODO: Implement instance link submission logic
-    await interaction.reply({
-      content: 'インスタンスリンク登録処理は開発中です',
-      ephemeral: true,
-    });
+    const invitationId = customId.replace('instance_link_modal_', '');
+    await handleInstanceLinkSubmit(interaction, invitationId);
   } else if (customId === 'ticket_create_modal') {
     // Handle ticket creation modal
     // TODO: Implement ticket creation logic
