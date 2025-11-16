@@ -3,6 +3,11 @@ import { BotEvent } from '../types/discord';
 import { logger } from '../utils/logger';
 import { createInvitationModal } from '../utils/modals';
 import { handleInvitationCreate } from '../handlers/invitationHandler';
+import {
+  handleJoinButton,
+  handleInterestedButton,
+  handleCancelButton,
+} from '../handlers/participantHandler';
 
 /**
  * Interaction create event handler
@@ -81,25 +86,16 @@ async function handleButtonInteraction(interaction: Interaction) {
   // Route to specific button handler based on customId prefix
   if (customId.startsWith('invite_join_')) {
     // Handle join button
-    // TODO: Implement join handler
-    await interaction.reply({
-      content: '参加機能は開発中です',
-      ephemeral: true,
-    });
+    const invitationId = customId.replace('invite_join_', '');
+    await handleJoinButton(interaction, invitationId);
   } else if (customId.startsWith('invite_interested_')) {
     // Handle interested button
-    // TODO: Implement interested handler
-    await interaction.reply({
-      content: '興味あり機能は開発中です',
-      ephemeral: true,
-    });
+    const invitationId = customId.replace('invite_interested_', '');
+    await handleInterestedButton(interaction, invitationId);
   } else if (customId.startsWith('invite_cancel_')) {
     // Handle cancel participation button
-    // TODO: Implement cancel participation handler
-    await interaction.reply({
-      content: 'キャンセル機能は開発中です',
-      ephemeral: true,
-    });
+    const invitationId = customId.replace('invite_cancel_', '');
+    await handleCancelButton(interaction, invitationId);
   } else if (customId.startsWith('invite_edit_')) {
     // Handle edit invitation button
     // TODO: Implement edit handler
