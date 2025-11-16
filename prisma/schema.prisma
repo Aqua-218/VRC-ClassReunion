@@ -13,8 +13,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // Production: PostgreSQL 14+
-  // provider = "sqlite"  // Development: Uncomment for local SQLite
+  provider = "sqlite" // Development: SQLite for local development
   url      = env("DATABASE_URL")
 }
 
@@ -28,50 +27,50 @@ datasource db {
 // =============================================================================
 model Invitation {
   // Primary Key
-  id String @id @db.VarChar(20) // Discord Message ID (Snowflake)
+  id String @id // Discord Message ID (Snowflake, 20 chars)
 
   // Discord Integration
-  threadId       String  @unique @db.VarChar(20) // Discord Thread/Post ID (Snowflake)
-  staffMessageId String? @db.VarChar(20) // Staff notification message ID
+  threadId       String  @unique // Discord Thread/Post ID (Snowflake, 20 chars)
+  staffMessageId String? // Staff notification message ID (20 chars)
 
   // Host Information (Snapshot)
-  hostId   String @db.VarChar(20) // Discord User ID (Snowflake)
-  hostName String @db.VarChar(100) // Host display name (snapshot for history)
+  hostId   String // Discord User ID (Snowflake, 20 chars)
+  hostName String // Host display name (snapshot for history, max 100 chars)
 
   // Event Details
-  eventName   String   @db.VarChar(200) // Event title (1-200 chars, no newlines)
-  startTime   DateTime @db.Timestamp(3) // Event start time (timezone-aware)
-  endTime     DateTime @db.Timestamp(3) // Event end time (must be > startTime)
-  worldName   String   @db.VarChar(200) // VRChat world name
-  worldLink   String?  @db.VarChar(500) // VRChat world URL (https://vrchat.com/...)
-  tag         String   @db.VarChar(50) // Category tag (観光/ゲーム/まったり/撮影会/イベント/その他)
-  description String   @db.Text // Event description (max 2000 chars)
+  eventName   String   // Event title (1-200 chars, no newlines)
+  startTime   DateTime // Event start time (timezone-aware)
+  endTime     DateTime // Event end time (must be > startTime)
+  worldName   String   // VRChat world name (max 200 chars)
+  worldLink   String?  // VRChat world URL (https://vrchat.com/..., max 500 chars)
+  tag         String   // Category tag (観光/ゲーム/まったり/撮影会/イベント/その他, max 50 chars)
+  description String   // Event description (max 2000 chars)
 
   // VRChat Instance Settings
-  instanceType   String  @db.VarChar(20) // group | friend | friendplus | public
-  vrchatProfile  String? @db.VarChar(500) // VRChat profile URL (ENCRYPTED, required for friend*)
-  instanceLink   String? @db.VarChar(500) // Instance invite link (ENCRYPTED, staff input)
-  maxParticipants Int    @db.Integer // Max participants (1-100)
+  instanceType    String  // group | friend | friendplus | public (max 20 chars)
+  vrchatProfile   String? // VRChat profile URL (ENCRYPTED, required for friend*, max 500 chars)
+  instanceLink    String? // Instance invite link (ENCRYPTED, staff input, max 500 chars)
+  maxParticipants Int     // Max participants (1-100)
 
   // Status Management
-  status String @default("recruiting") @db.VarChar(20) // recruiting | full | completed | cancelled
+  status String @default("recruiting") // recruiting | full | completed | cancelled (max 20 chars)
 
   // Staff Assignment (for group instances)
-  staffId   String? @db.VarChar(20) // Assigned staff Discord User ID
-  staffName String? @db.VarChar(100) // Assigned staff name (snapshot)
+  staffId   String? // Assigned staff Discord User ID (20 chars)
+  staffName String? // Assigned staff name (snapshot, max 100 chars)
 
   // Timestamps
-  createdAt DateTime @default(now()) @db.Timestamp(3)
-  updatedAt DateTime @updatedAt @db.Timestamp(3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   participants Participant[]
 
   // Indexes (Optimized for Query Patterns)
-  @@index([status, tag, startTime(sort: Asc)], name: "idx_invitation_list") // Q1: List with filters
-  @@index([hostId, startTime(sort: Desc)], name: "idx_invitation_host") // Host's events
+  @@index([status, tag, startTime], name: "idx_invitation_list") // Q1: List with filters
+  @@index([hostId, startTime], name: "idx_invitation_host") // Host's events
   @@index([status, endTime], name: "idx_invitation_auto_close") // Q4: Auto-close cron
-  @@index([startTime(sort: Desc)], name: "idx_invitation_recent") // Recent events
+  @@index([startTime], name: "idx_invitation_recent") // Recent events
   @@map("invitations")
 }
 
@@ -88,24 +87,24 @@ model Participant {
   id Int @id @default(autoincrement())
 
   // Foreign Key
-  invitationId String @db.VarChar(20) // → Invitation.id (CASCADE DELETE)
+  invitationId String // → Invitation.id (CASCADE DELETE, 20 chars)
 
   // User Information (Snapshot)
-  userId   String @db.VarChar(20) // Discord User ID (Snowflake)
-  userName String @db.VarChar(100) // User display name (snapshot for history)
+  userId   String // Discord User ID (Snowflake, 20 chars)
+  userName String // User display name (snapshot for history, max 100 chars)
 
   // Participation Status
-  status String @db.VarChar(20) // joined (confirmed) | interested (maybe)
+  status String // joined (confirmed) | interested (maybe), max 20 chars
 
   // Timestamp
-  createdAt DateTime @default(now()) @db.Timestamp(3)
+  createdAt DateTime @default(now())
 
   // Relations
   invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   // Constraints & Indexes
   @@unique([invitationId, userId], name: "unique_participant") // Prevent duplicate participation
-  @@index([userId, createdAt(sort: Desc)], name: "idx_participant_user_history") // Q3: User's participation history
+  @@index([userId, createdAt], name: "idx_participant_user_history") // Q3: User's participation history
   @@index([invitationId, status], name: "idx_participant_invitation_status") // Count joined participants
   @@map("participants")
 }
@@ -120,22 +119,22 @@ model Participant {
 // =============================================================================
 model Ticket {
   // Primary Key
-  id String @id @db.VarChar(20) // Discord Private Channel ID (Snowflake)
+  id String @id // Discord Private Channel ID (Snowflake, 20 chars)
 
   // User Information (Snapshot)
-  userId   String @db.VarChar(20) // Ticket creator Discord User ID
-  userName String @db.VarChar(100) // Creator display name (snapshot)
+  userId   String // Ticket creator Discord User ID (20 chars)
+  userName String // Creator display name (snapshot, max 100 chars)
 
   // Ticket Details
-  category String @db.VarChar(50) // question | trouble | other
-  status   String @default("open") @db.VarChar(20) // open | closed
+  category String // question | trouble | other (max 50 chars)
+  status   String @default("open") // open | closed (max 20 chars)
 
   // Timestamps
-  createdAt DateTime  @default(now()) @db.Timestamp(3)
-  closedAt  DateTime? @db.Timestamp(3) // Set when ticket is closed
+  createdAt DateTime  @default(now())
+  closedAt  DateTime? // Set when ticket is closed
 
   // Indexes
-  @@index([status, createdAt(sort: Desc)], name: "idx_ticket_open") // Open tickets list
-  @@index([userId, createdAt(sort: Desc)], name: "idx_ticket_user_history") // User's ticket history
+  @@index([status, createdAt], name: "idx_ticket_open") // Open tickets list
+  @@index([userId, createdAt], name: "idx_ticket_user_history") // User's ticket history
   @@map("tickets")
 }
