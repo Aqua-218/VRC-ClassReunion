@@ -1,0 +1,141 @@
+// =============================================================================
+// VRC同期会Discord Bot - Prisma Schema
+// =============================================================================
+// Database: PostgreSQL 14+ (Production) / SQLite 3.40+ (Development)
+// ORM: Prisma 5.8+
+// Last Updated: 2025-11-16
+// =============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = []
+  binaryTargets   = ["native", "debian-openssl-3.0.x"] // Linux deployment support
+}
+
+datasource db {
+  provider = "postgresql" // Production: PostgreSQL 14+
+  // provider = "sqlite"  // Development: Uncomment for local SQLite
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// INVITATION (お誘い募集マスター)
+// =============================================================================
+// Business: VRChatイベント募集情報の管理、Discord Forumスレッドと1:1対応
+// Relations: 1:N with Participant
+// Data Volume: 600 records/year (Phase 1) → 1,200/year (Phase 3)
+// Access Pattern: Read-Heavy (70% read, 30% write)
+// =============================================================================
+model Invitation {
+  // Primary Key
+  id String @id @db.VarChar(20) // Discord Message ID (Snowflake)
+
+  // Discord Integration
+  threadId       String  @unique @db.VarChar(20) // Discord Thread/Post ID (Snowflake)
+  staffMessageId String? @db.VarChar(20) // Staff notification message ID
+
+  // Host Information (Snapshot)
+  hostId   String @db.VarChar(20) // Discord User ID (Snowflake)
+  hostName String @db.VarChar(100) // Host display name (snapshot for history)
+
+  // Event Details
+  eventName   String   @db.VarChar(200) // Event title (1-200 chars, no newlines)
+  startTime   DateTime @db.Timestamp(3) // Event start time (timezone-aware)
+  endTime     DateTime @db.Timestamp(3) // Event end time (must be > startTime)
+  worldName   String   @db.VarChar(200) // VRChat world name
+  worldLink   String?  @db.VarChar(500) // VRChat world URL (https://vrchat.com/...)
+  tag         String   @db.VarChar(50) // Category tag (観光/ゲーム/まったり/撮影会/イベント/その他)
+  description String   @db.Text // Event description (max 2000 chars)
+
+  // VRChat Instance Settings
+  instanceType   String  @db.VarChar(20) // group | friend | friendplus | public
+  vrchatProfile  String? @db.VarChar(500) // VRChat profile URL (ENCRYPTED, required for friend*)
+  instanceLink   String? @db.VarChar(500) // Instance invite link (ENCRYPTED, staff input)
+  maxParticipants Int    @db.Integer // Max participants (1-100)
+
+  // Status Management
+  status String @default("recruiting") @db.VarChar(20) // recruiting | full | completed | cancelled
+
+  // Staff Assignment (for group instances)
+  staffId   String? @db.VarChar(20) // Assigned staff Discord User ID
+  staffName String? @db.VarChar(100) // Assigned staff name (snapshot)
+
+  // Timestamps
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+  updatedAt DateTime @updatedAt @db.Timestamp(3)
+
+  // Relations
+  participants Participant[]
+
+  // Indexes (Optimized for Query Patterns)
+  @@index([status, tag, startTime(sort: Asc)], name: "idx_invitation_list") // Q1: List with filters
+  @@index([hostId, startTime(sort: Desc)], name: "idx_invitation_host") // Host's events
+  @@index([status, endTime], name: "idx_invitation_auto_close") // Q4: Auto-close cron
+  @@index([startTime(sort: Desc)], name: "idx_invitation_recent") // Recent events
+  @@map("invitations")
+}
+
+// =============================================================================
+// PARTICIPANT (参加者情報)
+// =============================================================================
+// Business: イベント参加者の管理、1ユーザー×1募集につき1レコード
+// Relations: N:1 with Invitation (CASCADE DELETE)
+// Data Volume: 4,800 records/year (Phase 1) → 12,000/year (Phase 3)
+// Access Pattern: High read (participant lists), Moderate write (join/leave)
+// =============================================================================
+model Participant {
+  // Primary Key (Surrogate)
+  id Int @id @default(autoincrement())
+
+  // Foreign Key
+  invitationId String @db.VarChar(20) // → Invitation.id (CASCADE DELETE)
+
+  // User Information (Snapshot)
+  userId   String @db.VarChar(20) // Discord User ID (Snowflake)
+  userName String @db.VarChar(100) // User display name (snapshot for history)
+
+  // Participation Status
+  status String @db.VarChar(20) // joined (confirmed) | interested (maybe)
+
+  // Timestamp
+  createdAt DateTime @default(now()) @db.Timestamp(3)
+
+  // Relations
+  invitation Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // Constraints & Indexes
+  @@unique([invitationId, userId], name: "unique_participant") // Prevent duplicate participation
+  @@index([userId, createdAt(sort: Desc)], name: "idx_participant_user_history") // Q3: User's participation history
+  @@index([invitationId, status], name: "idx_participant_invitation_status") // Count joined participants
+  @@map("participants")
+}
+
+// =============================================================================
+// TICKET (チケット情報)
+// =============================================================================
+// Business: サポートチケット管理、Discord Private Channelと1:1対応
+// Relations: None (Independent entity)
+// Data Volume: 180 records/year (Phase 1) → 300/year (Phase 3)
+// Access Pattern: Moderate read (open tickets list), Low write (create/close)
+// =============================================================================
+model Ticket {
+  // Primary Key
+  id String @id @db.VarChar(20) // Discord Private Channel ID (Snowflake)
+
+  // User Information (Snapshot)
+  userId   String @db.VarChar(20) // Ticket creator Discord User ID
+  userName String @db.VarChar(100) // Creator display name (snapshot)
+
+  // Ticket Details
+  category String @db.VarChar(50) // question | trouble | other
+  status   String @default("open") @db.VarChar(20) // open | closed
+
+  // Timestamps
+  createdAt DateTime  @default(now()) @db.Timestamp(3)
+  closedAt  DateTime? @db.Timestamp(3) // Set when ticket is closed
+
+  // Indexes
+  @@index([status, createdAt(sort: Desc)], name: "idx_ticket_open") // Open tickets list
+  @@index([userId, createdAt(sort: Desc)], name: "idx_ticket_user_history") // User's ticket history
+  @@map("tickets")
+}
