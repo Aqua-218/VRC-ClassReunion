@@ -8,6 +8,12 @@ import {
   handleInterestedButton,
   handleCancelButton,
 } from '../handlers/participantHandler';
+import {
+  handleEditButton,
+  handleEditModalSubmit,
+  handleCancelEventButton,
+  handleConfirmCancel,
+} from '../handlers/editHandler';
 
 /**
  * Interaction create event handler
@@ -98,18 +104,12 @@ async function handleButtonInteraction(interaction: Interaction) {
     await handleCancelButton(interaction, invitationId);
   } else if (customId.startsWith('invite_edit_')) {
     // Handle edit invitation button
-    // TODO: Implement edit handler
-    await interaction.reply({
-      content: '編集機能は開発中です',
-      ephemeral: true,
-    });
+    const invitationId = customId.replace('invite_edit_', '');
+    await handleEditButton(interaction, invitationId);
   } else if (customId.startsWith('invite_cancel_event_')) {
     // Handle cancel invitation button
-    // TODO: Implement cancel event handler
-    await interaction.reply({
-      content: 'イベントキャンセル機能は開発中です',
-      ephemeral: true,
-    });
+    const invitationId = customId.replace('invite_cancel_event_', '');
+    await handleCancelEventButton(interaction, invitationId);
   } else if (customId.startsWith('staff_assign_')) {
     // Handle staff assignment button
     // TODO: Implement staff assignment handler
@@ -123,6 +123,16 @@ async function handleButtonInteraction(interaction: Interaction) {
     await interaction.showModal(modal);
     logger.debug('Displayed invitation creation modal', {
       userId: interaction.user.id,
+    });
+  } else if (customId.startsWith('confirm_cancel_')) {
+    // Handle cancel confirmation
+    const invitationId = customId.replace('confirm_cancel_', '');
+    await handleConfirmCancel(interaction, invitationId);
+  } else if (customId.startsWith('cancel_cancel_')) {
+    // Handle cancel cancellation (dismiss)
+    await interaction.update({
+      content: 'キャンセルを取り消しました',
+      components: [],
     });
   } else if (customId === 'ticket_create') {
     // Handle create ticket button
@@ -160,11 +170,7 @@ async function handleModalSubmit(interaction: Interaction) {
     await handleInvitationCreate(interaction);
   } else if (customId === 'invitation_edit_modal') {
     // Handle invitation edit modal
-    // TODO: Implement invitation edit logic
-    await interaction.reply({
-      content: '募集編集処理は開発中です',
-      ephemeral: true,
-    });
+    await handleEditModalSubmit(interaction);
   } else if (customId.startsWith('instance_link_modal_')) {
     // Handle instance link modal
     // TODO: Implement instance link submission logic
