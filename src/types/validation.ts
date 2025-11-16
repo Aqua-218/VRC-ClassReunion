@@ -198,6 +198,7 @@ export const InvitationUpdateSchema = z
     instanceLink: z.string().optional(),
     staffId: z.string().optional(),
     staffName: z.string().optional(),
+    status: InvitationStatus.optional(),
   })
   .refine(
     (data) => {

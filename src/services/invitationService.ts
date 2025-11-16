@@ -397,6 +397,36 @@ export class InvitationService {
       throw error;
     }
   }
+
+  /**
+   * Get invitations to auto-close
+   * Finds invitations with status 'recruiting' or 'full' and endTime < now
+   *
+   * @param currentTime - Current timestamp
+   * @returns Array of invitations to close
+   */
+  async getInvitationsToAutoClose(currentTime: Date): Promise<Invitation[]> {
+    try {
+      return await db.invitation.findMany({
+        where: {
+          status: {
+            in: ['recruiting', 'full'],
+          },
+          endTime: {
+            lt: currentTime,
+          },
+        },
+        orderBy: {
+          endTime: 'asc',
+        },
+      });
+    } catch (error) {
+      logger.error('Failed to get invitations to auto-close', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
 }
 
 /**

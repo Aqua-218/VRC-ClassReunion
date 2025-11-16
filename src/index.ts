@@ -4,6 +4,7 @@ import { logger } from './utils/logger';
 import { connectDatabase, disconnectDatabase } from './utils/database';
 import { loadEvents } from './handlers/eventLoader';
 import { BotClient } from './types/discord';
+import { startAutoCloseScheduler } from './schedulers/autoClose';
 
 /**
  * Discord Client initialization
@@ -48,6 +49,10 @@ async function main() {
     // Login to Discord
     await client.login(env.DISCORD_BOT_TOKEN);
     logger.info('Discord login successful');
+
+    // Start schedulers after successful login
+    startAutoCloseScheduler(client);
+    logger.info('Auto-close scheduler started');
   } catch (error) {
     logger.error('Bot startup failed', {
       error: error instanceof Error ? error.message : String(error),
