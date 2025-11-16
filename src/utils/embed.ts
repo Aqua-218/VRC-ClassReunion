@@ -333,3 +333,43 @@ export function createStaffAssignButton(
 
   return row;
 }
+
+/**
+ * Create setup invitation button
+ * Button for /setup invite command
+ *
+ * @returns ActionRowBuilder with button
+ */
+export function createSetupInviteButton(): ActionRowBuilder<ButtonBuilder> {
+  const row = new ActionRowBuilder<ButtonBuilder>();
+
+  const button = new ButtonBuilder()
+    .setCustomId('invitation_create')
+    .setLabel('募集を作成')
+    .setStyle(ButtonStyle.Primary)
+    .setEmoji('📝');
+
+  row.addComponents(button);
+
+  return row;
+}
+
+/**
+ * Create setup ticket button
+ * Button for /setup ticket command
+ *
+ * @returns ActionRowBuilder with button
+ */
+export function createSetupTicketButton(): ActionRowBuilder<ButtonBuilder> {
+  const row = new ActionRowBuilder<ButtonBuilder>();
+
+  const button = new ButtonBuilder()
+    .setCustomId('ticket_create')
+    .setLabel('チケットを作成')
+    .setStyle(ButtonStyle.Success)
+    .setEmoji('🎫');
+
+  row.addComponents(button);
+
+  return row;
+}

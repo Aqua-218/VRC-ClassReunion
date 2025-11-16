@@ -19,6 +19,7 @@ import {
   handleAddInstanceLink,
   handleInstanceLinkSubmit,
 } from '../handlers/staffAssignmentHandler';
+import { handleSetupInvite, handleSetupTicket } from '../handlers/setupHandler';
 
 /**
  * Interaction create event handler
@@ -233,9 +234,24 @@ async function handleCommand(interaction: Interaction) {
     guildId: interaction.guildId,
   });
 
-  // TODO: Implement command handlers
-  await interaction.reply({
-    content: 'コマンド機能は開発中です',
-    ephemeral: true,
-  });
+  // Route to command handlers
+  if (commandName === 'setup') {
+    const subcommand = interaction.options.getSubcommand();
+
+    if (subcommand === 'invite') {
+      await handleSetupInvite(interaction);
+    } else if (subcommand === 'ticket') {
+      await handleSetupTicket(interaction);
+    } else {
+      await interaction.reply({
+        content: '不明なサブコマンドです',
+        ephemeral: true,
+      });
+    }
+  } else {
+    await interaction.reply({
+      content: '不明なコマンドです',
+      ephemeral: true,
+    });
+  }
 }
