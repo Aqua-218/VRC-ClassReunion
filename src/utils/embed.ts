@@ -373,3 +373,24 @@ export function createSetupTicketButton(): ActionRowBuilder<ButtonBuilder> {
 
   return row;
 }
+
+/**
+ * Create ticket close button
+ * Button for closing a ticket
+ *
+ * @param channelId - Ticket channel ID
+ * @returns ActionRowBuilder with button
+ */
+export function createTicketCloseButton(channelId: string): ActionRowBuilder<ButtonBuilder> {
+  const row = new ActionRowBuilder<ButtonBuilder>();
+
+  const button = new ButtonBuilder()
+    .setCustomId(`ticket_close_${channelId}`)
+    .setLabel('チケットをクローズ')
+    .setStyle(ButtonStyle.Danger)
+    .setEmoji('🔒');
+
+  row.addComponents(button);
+
+  return row;
+}

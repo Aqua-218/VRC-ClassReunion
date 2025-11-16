@@ -126,8 +126,9 @@ model Ticket {
   userName String // Creator display name (snapshot, max 100 chars)
 
   // Ticket Details
-  category String // question | trouble | other (max 50 chars)
-  status   String @default("open") // open | closed (max 20 chars)
+  category    String // question | trouble | other (max 50 chars)
+  description String // Ticket description (max 2000 chars)
+  status      String @default("open") // open | closed (max 20 chars)
 
   // Timestamps
   createdAt DateTime  @default(now())

@@ -1,7 +1,7 @@
 import { Interaction } from 'discord.js';
 import { BotEvent } from '../types/discord';
 import { logger } from '../utils/logger';
-import { createInvitationModal } from '../utils/modals';
+import { createInvitationModal, createTicketModal } from '../utils/modals';
 import { handleInvitationCreate } from '../handlers/invitationHandler';
 import {
   handleJoinButton,
@@ -20,6 +20,7 @@ import {
   handleInstanceLinkSubmit,
 } from '../handlers/staffAssignmentHandler';
 import { handleSetupInvite, handleSetupTicket } from '../handlers/setupHandler';
+import { handleTicketCreate, handleTicketClose } from '../handlers/ticketHandler';
 
 /**
  * Interaction create event handler
@@ -142,12 +143,16 @@ async function handleButtonInteraction(interaction: Interaction) {
       components: [],
     });
   } else if (customId === 'ticket_create') {
-    // Handle create ticket button
-    // TODO: Implement ticket creation modal display
-    await interaction.reply({
-      content: 'チケット作成機能は開発中です',
-      ephemeral: true,
+    // Handle create ticket button - show modal
+    const modal = createTicketModal();
+    await interaction.showModal(modal);
+    logger.debug('Displayed ticket creation modal', {
+      userId: interaction.user.id,
     });
+  } else if (customId.startsWith('ticket_close_')) {
+    // Handle ticket close button
+    const channelId = customId.replace('ticket_close_', '');
+    await handleTicketClose(interaction, channelId);
   } else {
     logger.warn('Unknown button interaction', { customId });
     await interaction.reply({
@@ -184,11 +189,7 @@ async function handleModalSubmit(interaction: Interaction) {
     await handleInstanceLinkSubmit(interaction, invitationId);
   } else if (customId === 'ticket_create_modal') {
     // Handle ticket creation modal
-    // TODO: Implement ticket creation logic
-    await interaction.reply({
-      content: 'チケット作成処理は開発中です',
-      ephemeral: true,
-    });
+    await handleTicketCreate(interaction);
   } else {
     logger.warn('Unknown modal submit', { customId });
     await interaction.reply({
