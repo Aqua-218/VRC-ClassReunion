@@ -193,6 +193,11 @@ export const InvitationUpdateSchema = z
       .min(1, '最大参加者数は1以上である必要があります')
       .max(100, '最大参加者数は100以下である必要があります')
       .optional(),
+
+    staffMessageId: z.string().optional(),
+    instanceLink: z.string().optional(),
+    staffId: z.string().optional(),
+    staffName: z.string().optional(),
   })
   .refine(
     (data) => {

@@ -20,6 +20,7 @@ const envSchema = z.object({
   // ==========================================
   INVITATION_FORUM_CHANNEL_ID: z.string().min(1, 'INVITATION_FORUM_CHANNEL_IDは必須です'),
   TICKET_CATEGORY_ID: z.string().min(1, 'TICKET_CATEGORY_IDは必須です'),
+  STAFF_CHANNEL_ID: z.string().min(1, 'STAFF_CHANNEL_IDは必須です'),
 
   // ==========================================
   // 必須: ロールID

@@ -9,6 +9,7 @@ import {
   InstanceType,
 } from '../types/validation';
 import { createInvitationEmbed, createInvitationButtons, createHostButtons } from '../utils/embed';
+import { postStaffNotification } from './staffHandler';
 
 /**
  * Handle invitation creation modal submission
@@ -97,6 +98,11 @@ export async function handleInvitationCreate(interaction: ModalSubmitInteraction
     await interaction.editReply({
       content: `✅ 募集を作成しました!\n${thread.url}`,
     });
+
+    // Post staff notification if group instance
+    if (validationResult.data.instanceType === 'group') {
+      await postStaffNotification(interaction.client, thread.id);
+    }
 
     logger.info('Invitation created successfully', {
       invitationId: thread.id,
